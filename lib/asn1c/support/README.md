@@ -56,6 +56,12 @@ user@host ~/Documents/git/open5gs/lib/asn1c/ngap$ \
     -no-gen-OER -no-gen-UPER \
     ../support/ngap-r17.3.0/38413-h30.asn
 
+    ../../../../my/asn1c/asn1c/asn1c -pdu=all \
+    -fprefix=NGAP_ -fcompound-names -findirect-choice -fno-include-deps \
+    -no-gen-BER -no-gen-XER -no-gen-JER -no-gen-CBOR \
+    -no-gen-OER -no-gen-UPER \
+    ../support/ngap-r17.3.0/38413-h30.asn
+
 Fix NGAP_RANNodeNameUTF8String.c (Issues #994 - APC_EXTENSIBLE)
 ===============================================================
 diff --git a/lib/asn1c/ngap/NGAP_RANNodeNameUTF8String.c b/lib/asn1c/ngap/NGAP_RANNodeNameUTF8String.c
@@ -125,7 +131,7 @@ diff --git a/lib/asn1c/common/asn_internal.h b/lib/asn1c/common/asn_internal.h
 diff -u asn_internal.h ~/asn_internal.h
 --- asn_internal.h	2022-02-26 15:48:33.431509100 +0900
 +++ /home/acetcom/asn_internal.h	2022-02-26 15:43:00.890972555 +0900
-@@ -34,10 +34,53 @@
+@@ -43,10 +43,53 @@
  #define	ASN1C_ENVIRONMENT_VERSION	923	/* Compile-time version */
  int get_asn1c_environment_version(void);	/* Run-time version */
 
@@ -177,8 +183,103 @@ diff -u asn_internal.h ~/asn_internal.h
 +
 +#endif
 
- #define        asn_debug_indent        0
+ #define	asn_debug_indent	0
  #define ASN_DEBUG_INDENT_ADD(i) do{}while(0)
+
+
+user@host ~/Documents/git/open5gs/lib/asn1c/common$ \
+    git diff OPEN_TYPE_aper.c
+diff --git a/lib/asn1c/common/OPEN_TYPE_aper.c b/lib/asn1c/common/OPEN_TYPE_aper.c
+index 124746766..f6b0755ee 100644
+--- a/lib/asn1c/common/OPEN_TYPE_aper.c
++++ b/lib/asn1c/common/OPEN_TYPE_aper.c
+@@ -17,6 +17,7 @@ OPEN_TYPE_aper_get(const asn_codec_ctx_t *opt_codec_ctx,
+     void **memb_ptr2; /* Pointer to that pointer */
+     void *inner_value;
+     asn_dec_rval_t rv;
++    int choice_wrapper_allocated = 0;
+ 
+     if(!(elm->flags & ATF_OPEN_TYPE)) {
+         ASN__DECODE_FAILED;
+@@ -85,6 +86,7 @@ OPEN_TYPE_aper_get(const asn_codec_ctx_t *opt_codec_ctx,
+             if(*memb_ptr2 == NULL) {
+                 ASN__DECODE_FAILED;
+             }
++            choice_wrapper_allocated = 1;
+         } else {
+             /* Make sure we reset the structure first before decoding */
+             if(CHOICE_variant_set_presence(elm->type, *memb_ptr2, 0)
+@@ -177,13 +179,38 @@ OPEN_TYPE_aper_get(const asn_codec_ctx_t *opt_codec_ctx,
+     case RC_WMORE:
+     case RC_FAIL:
+         ASN_DEBUG("Cleaning up after failure, code=%d", rv.code);
+-        if(*memb_ptr2) {
++        if(elm->type->elements_count > 0) {
++            /*
++             * CHOICE wrapper mode.  For indirect CHOICE variants,
++             * aper_open_type_get() may allocate inner_value before the
++             * decoded pointer is copied back into the actual CHOICE field.
++             * If decoding fails at that point, the parent tree cannot see
++             * inner_value, so it must be released here.
++             */
++            if(variant_elm && (variant_elm->flags & ATF_POINTER)) {
++                if(inner_value)
++                    ASN_STRUCT_FREE(*selected.type_descriptor, inner_value);
++            } else {
++                if(inner_value)
++                    ASN_STRUCT_RESET(*selected.type_descriptor, inner_value);
++            }
++
++            if(*memb_ptr2)
++                CHOICE_variant_set_presence(elm->type, *memb_ptr2, 0);
++
++            if(choice_wrapper_allocated && *memb_ptr2) {
++                ASN_STRUCT_FREE(*elm->type, *memb_ptr2);
++                *memb_ptr2 = NULL;
++            }
++        } else {
++            /* Direct type mode. */
+             if(elm->flags & ATF_POINTER) {
+-                ASN_STRUCT_FREE(*selected.type_descriptor, inner_value);
++                if(inner_value)
++                    ASN_STRUCT_FREE(*selected.type_descriptor, inner_value);
+                 *memb_ptr2 = NULL;
+             } else {
+-                ASN_STRUCT_RESET(*selected.type_descriptor,
+-                                              inner_value);
++                if(inner_value)
++                    ASN_STRUCT_RESET(*selected.type_descriptor, inner_value);
+             }
+         }
+     }
+
+
+user@host ~/Documents/git/open5gs/lib/asn1c/common$ \
+    git diff constr_CHOICE_aper.c
+diff -u ~/Documents/git/my/asn1c/skeletons/constr_CHOICE_aper.c constr_CHOICE_aper.c 
+--- /home/acetcom/Documents/git/my/asn1c/skeletons/constr_CHOICE_aper.c	2026-04-27 10:42:42.588167379 +0900
++++ constr_CHOICE_aper.c	2026-04-27 17:18:25.927819904 +0900
+@@ -185,13 +185,18 @@
+     }
+ 
+     if(ct && ct->range_bits >= 0) {
++        asn_enc_rval_t rval;
++
+         if(per_put_few_bits(po, present_enc, ct->range_bits)) {
+             APER_ENCODER_RECURSION_DEPTH_DEC();
+             ASN__ENCODE_FAILED;
+         }
+ 
+-        return elm->type->op->aper_encoder(elm->type, elm->encoding_constraints.per_constraints,
++        rval = elm->type->op->aper_encoder(elm->type, elm->encoding_constraints.per_constraints,
+                                            memb_ptr, po);
++
++        APER_ENCODER_RECURSION_DEPTH_DEC();
++        return rval;
+     } else {
+         asn_enc_rval_t rval = {0,0,0};
+         if(specs->ext_start == -1) {
+
 
 Check meson.build
 ===========================================
