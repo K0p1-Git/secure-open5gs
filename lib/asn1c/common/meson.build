@@ -53,7 +53,6 @@ libasn1c_common_sources = files('''
     constr_SEQUENCE.h
     constr_SEQUENCE.c
     constr_SET.h
-    constr_SET.c
     constr_SEQUENCE_OF.h
     constr_SEQUENCE_OF.c
     constr_SET_OF.h
@@ -117,7 +116,6 @@ libasn1c_common_sources = files('''
     UTF8String_print.c
     constr_CHOICE_print.c
     constr_SEQUENCE_print.c
-    constr_SET_print.c
     constr_SET_OF_print.c
     asn_random_fill.h
     asn_random_fill.c
@@ -130,7 +128,6 @@ libasn1c_common_sources = files('''
     UTF8String_rfill.c
     constr_CHOICE_rfill.c
     constr_SEQUENCE_rfill.c
-    constr_SET_rfill.c
     constr_SET_OF_rfill.c
 '''.split())
 
