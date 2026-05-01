@@ -1750,7 +1750,7 @@ ogs_pkbuf_t *testngap_build_uplink_ran_configuration_transfer(
     NGAP_GlobalRANNodeID_t *sourceGlobalRANNodeID;
     NGAP_GlobalGNB_ID_t *sourceGlobalGNB_ID;
     NGAP_TAI_t *sourceSelectedTAI;
-    NGAP_TargetRANNodeID_t *targetRANNodeID = NULL;
+    NGAP_TargetRANNodeID_SON_t *targetRANNodeID = NULL;
     NGAP_GlobalRANNodeID_t *targetGlobalRANNodeID;
     NGAP_GlobalGNB_ID_t *targetGlobalGNB_ID;
     NGAP_TAI_t *targetSelectedTAI;
@@ -1794,7 +1794,7 @@ ogs_pkbuf_t *testngap_build_uplink_ran_configuration_transfer(
 
     targetRANNodeID = CALLOC(1, sizeof(*targetRANNodeID));
     ogs_assert(targetRANNodeID);
-    SONConfigurationTransfer->targetRANNodeID = targetRANNodeID;
+    SONConfigurationTransfer->targetRANNodeID_SON = targetRANNodeID;
 
     targetGlobalRANNodeID = CALLOC(1, sizeof(*targetGlobalRANNodeID));
     ogs_assert(targetGlobalRANNodeID);

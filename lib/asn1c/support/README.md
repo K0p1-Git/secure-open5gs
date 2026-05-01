@@ -49,6 +49,13 @@ user@host ~/documents/git/open5gs/lib/asn1c/s1ap$ \
     -no-gen-OER -no-gen-UPER \
     ../support/s1ap-r17.3.0/36413-h30.asn
 
+user@host ~/documents/git/open5gs/lib/asn1c/s1ap$ \
+    ../../../../my/asn1c/asn1c/asn1c -pdu=all \
+    -fprefix=S1AP_ -fcompound-names -findirect-choice -fno-include-deps \
+    -no-gen-BER -no-gen-XER -no-gen-JER -no-gen-CBOR \
+    -no-gen-OER -no-gen-UPER \
+    ../support/s1ap-r19.1.0/36413-j10.asn
+
 user@host ~/Documents/git/open5gs/lib/asn1c/ngap$ \
     ASN1C_PREFIX=NGAP_ ../../../../my/asn1c/asn1c/asn1c -pdu=all \
     -fcompound-names -findirect-choice -fno-include-deps \
@@ -61,6 +68,12 @@ user@host ~/Documents/git/open5gs/lib/asn1c/ngap$ \
     -no-gen-BER -no-gen-XER -no-gen-JER -no-gen-CBOR \
     -no-gen-OER -no-gen-UPER \
     ../support/ngap-r17.3.0/38413-h30.asn
+
+    ../../../../my/asn1c/asn1c/asn1c -pdu=all \
+    -fprefix=NGAP_ -fcompound-names -findirect-choice -fno-include-deps \
+    -no-gen-BER -no-gen-XER -no-gen-JER -no-gen-CBOR \
+    -no-gen-OER -no-gen-UPER \
+    ../support/ngap-r19.2.0/38413-j20.asn
 
 Fix NGAP_RANNodeNameUTF8String.c (Issues #994 - APC_EXTENSIBLE)
 ===============================================================

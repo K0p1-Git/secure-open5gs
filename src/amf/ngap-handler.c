@@ -2753,7 +2753,7 @@ void ngap_handle_uplink_ran_configuration_transfer(
             OGS_ADDR(gnb->sctp.addr, buf), gnb->gnb_id);
 
     if (SONConfigurationTransfer) {
-        NGAP_TargetRANNodeID_t *targetRANNodeID = NULL;
+        NGAP_TargetRANNodeID_SON_t *targetRANNodeID = NULL;
         NGAP_GlobalRANNodeID_t *targetGlobalRANNodeID;
         NGAP_GlobalGNB_ID_t *targetGlobalGNB_ID;
         NGAP_SourceRANNodeID_t *sourceRANNodeID = NULL;
@@ -2764,7 +2764,7 @@ void ngap_handle_uplink_ran_configuration_transfer(
         uint32_t target_gnb_id, source_gnb_id;
         ogs_5gs_tai_t target_tai, source_tai;
 
-        targetRANNodeID = SONConfigurationTransfer->targetRANNodeID;
+        targetRANNodeID = SONConfigurationTransfer->targetRANNodeID_SON;
         if (!targetRANNodeID || !targetRANNodeID->globalRANNodeID ||
                 !targetRANNodeID->selectedTAI) {
             ogs_error("No targetRANNodeID");
