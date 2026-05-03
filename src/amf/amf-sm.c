@@ -28,6 +28,8 @@
 #include "nnssf-handler.h"
 #include "nas-security.h"
 
+static const char *amf_echo_probe = "UERANSIM_AMF_ECHO_PROBE";
+
 void amf_state_initial(ogs_fsm_t *s, amf_event_t *e)
 {
     amf_sm_debug(e);
@@ -1034,6 +1036,24 @@ void amf_state_operational(ogs_fsm_t *s, amf_event_t *e)
 
         ogs_assert(gnb);
         ogs_assert(OGS_FSM_STATE(&gnb->sm));
+
+        if (pkbuf->len == strlen(amf_echo_probe) &&
+                memcmp(pkbuf->data, amf_echo_probe, pkbuf->len) == 0) {
+            ogs_info("gNB-N2[%s] AMF echo probe received; sending echo response",
+                    OGS_ADDR(gnb->sctp.addr, buf));
+
+            pkbuf = ogs_pkbuf_alloc(NULL, strlen(amf_echo_probe));
+            ogs_assert(pkbuf);
+            ogs_pkbuf_put_data(pkbuf,
+                    (const uint8_t *)amf_echo_probe, strlen(amf_echo_probe));
+
+            r = ngap_send_to_gnb(gnb, pkbuf, NGAP_NON_UE_SIGNALLING);
+            ogs_expect(r == OGS_OK);
+            ogs_assert(r != OGS_ERROR);
+
+            ogs_pkbuf_free(e->pkbuf);
+            break;
+        }
 
         rc = ogs_ngap_decode(&ngap_message, pkbuf);
         if (rc == OGS_OK) {
